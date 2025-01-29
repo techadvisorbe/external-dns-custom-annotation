@@ -38,28 +38,30 @@ import (
 	"sigs.k8s.io/external-dns/endpoint"
 )
 
+var AnnotationPrefix = "external-dns.alpha.kubernetes.io"
+
 const (
 	// The annotation used for figuring out which controller is responsible
-	controllerAnnotationKey = "external-dns.alpha.kubernetes.io/controller"
+	controllerAnnotationKey = "/controller"
 	// The annotation used for defining the desired hostname
-	hostnameAnnotationKey = "external-dns.alpha.kubernetes.io/hostname"
+	hostnameAnnotationKey = "/hostname"
 	// The annotation used for specifying whether the public or private interface address is used
-	accessAnnotationKey = "external-dns.alpha.kubernetes.io/access"
+	accessAnnotationKey = "/access"
 	// The annotation used for specifying the type of endpoints to use for headless services
-	endpointsTypeAnnotationKey = "external-dns.alpha.kubernetes.io/endpoints-type"
+	endpointsTypeAnnotationKey = "/endpoints-type"
 	// The annotation used for defining the desired ingress/service target
-	targetAnnotationKey = "external-dns.alpha.kubernetes.io/target"
+	targetAnnotationKey = "/target"
 	// The annotation used for defining the desired DNS record TTL
-	ttlAnnotationKey = "external-dns.alpha.kubernetes.io/ttl"
+	ttlAnnotationKey = "/ttl"
 	// The annotation used for switching to the alias record types e. g. AWS Alias records instead of a normal CNAME
-	aliasAnnotationKey = "external-dns.alpha.kubernetes.io/alias"
+	aliasAnnotationKey = "/alias"
 	// The annotation used to determine the source of hostnames for ingresses.  This is an optional field - all
 	// available hostname sources are used if not specified.
-	ingressHostnameSourceKey = "external-dns.alpha.kubernetes.io/ingress-hostname-source"
+	ingressHostnameSourceKey = "/ingress-hostname-source"
 	// The value of the controller annotation so that we feel responsible
 	controllerAnnotationValue = "dns-controller"
 	// The annotation used for defining the desired hostname
-	internalHostnameAnnotationKey = "external-dns.alpha.kubernetes.io/internal-hostname"
+	internalHostnameAnnotationKey = "/internal-hostname"
 )
 
 const (
@@ -70,9 +72,9 @@ const (
 // Provider-specific annotations
 const (
 	// The annotation used for determining if traffic will go through Cloudflare
-	CloudflareProxiedKey = "external-dns.alpha.kubernetes.io/cloudflare-proxied"
+	CloudflareProxiedKey = "/cloudflare-proxied"
 
-	SetIdentifierKey = "external-dns.alpha.kubernetes.io/set-identifier"
+	SetIdentifierKey = "/set-identifier"
 )
 
 const (
@@ -89,7 +91,7 @@ type Source interface {
 
 func getTTLFromAnnotations(annotations map[string]string, resource string) endpoint.TTL {
 	ttlNotConfigured := endpoint.TTL(0)
-	ttlAnnotation, exists := annotations[ttlAnnotationKey]
+	ttlAnnotation, exists := annotations[AnnotationPrefix+ttlAnnotationKey]
 	if !exists {
 		return ttlNotConfigured
 	}
@@ -154,7 +156,7 @@ func parseTemplate(fqdnTemplate string) (tmpl *template.Template, err error) {
 }
 
 func getHostnamesFromAnnotations(annotations map[string]string) []string {
-	hostnameAnnotation, exists := annotations[hostnameAnnotationKey]
+	hostnameAnnotation, exists := annotations[AnnotationPrefix+hostnameAnnotationKey]
 	if !exists {
 		return nil
 	}
@@ -162,15 +164,15 @@ func getHostnamesFromAnnotations(annotations map[string]string) []string {
 }
 
 func getAccessFromAnnotations(annotations map[string]string) string {
-	return annotations[accessAnnotationKey]
+	return annotations[AnnotationPrefix+accessAnnotationKey]
 }
 
 func getEndpointsTypeFromAnnotations(annotations map[string]string) string {
-	return annotations[endpointsTypeAnnotationKey]
+	return annotations[AnnotationPrefix+endpointsTypeAnnotationKey]
 }
 
 func getInternalHostnamesFromAnnotations(annotations map[string]string) []string {
-	internalHostnameAnnotation, exists := annotations[internalHostnameAnnotationKey]
+	internalHostnameAnnotation, exists := annotations[AnnotationPrefix+internalHostnameAnnotationKey]
 	if !exists {
 		return nil
 	}
@@ -182,7 +184,7 @@ func splitHostnameAnnotation(annotation string) []string {
 }
 
 func getAliasFromAnnotations(annotations map[string]string) bool {
-	aliasAnnotation, exists := annotations[aliasAnnotationKey]
+	aliasAnnotation, exists := annotations[AnnotationPrefix+aliasAnnotationKey]
 	return exists && aliasAnnotation == "true"
 }
 
@@ -206,27 +208,27 @@ func getProviderSpecificAnnotations(annotations map[string]string) (endpoint.Pro
 	for k, v := range annotations {
 		if k == SetIdentifierKey {
 			setIdentifier = v
-		} else if strings.HasPrefix(k, "external-dns.alpha.kubernetes.io/aws-") {
-			attr := strings.TrimPrefix(k, "external-dns.alpha.kubernetes.io/aws-")
+		} else if strings.HasPrefix(k, AnnotationPrefix+"/aws-") {
+			attr := strings.TrimPrefix(k, AnnotationPrefix+"/aws-")
 			providerSpecificAnnotations = append(providerSpecificAnnotations, endpoint.ProviderSpecificProperty{
 				Name:  fmt.Sprintf("aws/%s", attr),
 				Value: v,
 			})
-		} else if strings.HasPrefix(k, "external-dns.alpha.kubernetes.io/scw-") {
-			attr := strings.TrimPrefix(k, "external-dns.alpha.kubernetes.io/scw-")
+		} else if strings.HasPrefix(k, AnnotationPrefix+"/scw-") {
+			attr := strings.TrimPrefix(k, AnnotationPrefix+"/scw-")
 			providerSpecificAnnotations = append(providerSpecificAnnotations, endpoint.ProviderSpecificProperty{
 				Name:  fmt.Sprintf("scw/%s", attr),
 				Value: v,
 			})
-		} else if strings.HasPrefix(k, "external-dns.alpha.kubernetes.io/ibmcloud-") {
-			attr := strings.TrimPrefix(k, "external-dns.alpha.kubernetes.io/ibmcloud-")
+		} else if strings.HasPrefix(k, AnnotationPrefix+"/ibmcloud-") {
+			attr := strings.TrimPrefix(k, AnnotationPrefix+"/ibmcloud-")
 			providerSpecificAnnotations = append(providerSpecificAnnotations, endpoint.ProviderSpecificProperty{
 				Name:  fmt.Sprintf("ibmcloud-%s", attr),
 				Value: v,
 			})
-		} else if strings.HasPrefix(k, "external-dns.alpha.kubernetes.io/webhook-") {
+		} else if strings.HasPrefix(k, AnnotationPrefix+"/webhook-") {
 			// Support for wildcard annotations for webhook providers
-			attr := strings.TrimPrefix(k, "external-dns.alpha.kubernetes.io/webhook-")
+			attr := strings.TrimPrefix(k, AnnotationPrefix+"/webhook-")
 			providerSpecificAnnotations = append(providerSpecificAnnotations, endpoint.ProviderSpecificProperty{
 				Name:  fmt.Sprintf("webhook/%s", attr),
 				Value: v,
@@ -242,7 +244,7 @@ func getTargetsFromTargetAnnotation(annotations map[string]string) endpoint.Targ
 	var targets endpoint.Targets
 
 	// Get the desired hostname of the ingress from the annotation.
-	targetAnnotation, exists := annotations[targetAnnotationKey]
+	targetAnnotation, exists := annotations[AnnotationPrefix+targetAnnotationKey]
 	if exists && targetAnnotation != "" {
 		// splits the hostname annotation and removes the trailing periods
 		targetsList := strings.Split(strings.Replace(targetAnnotation, " ", "", -1), ",")

@@ -52,6 +52,7 @@ type Config struct {
 	Sources                            []string
 	Namespace                          string
 	AnnotationFilter                   string
+	AnnotationPrefix                   string
 	LabelFilter                        string
 	IngressClassNames                  []string
 	FQDNTemplate                       string
@@ -219,6 +220,7 @@ var defaultConfig = &Config{
 	Sources:                     nil,
 	Namespace:                   "",
 	AnnotationFilter:            "",
+	AnnotationPrefix:            "external-dns.alpha.kubernetes.io",
 	LabelFilter:                 labels.Everything().String(),
 	IngressClassNames:           nil,
 	FQDNTemplate:                "",
@@ -409,6 +411,7 @@ func (cfg *Config) ParseFlags(args []string) error {
 		return err
 	}
 
+	source.AnnotationPrefix = cfg.AnnotationPrefix
 	return nil
 }
 
@@ -439,6 +442,7 @@ func App(cfg *Config) *kingpin.Application {
 	app.Flag("openshift-router-name", "if source is openshift-route then you can pass the ingress controller name. Based on this name external-dns will select the respective router from the route status and map that routerCanonicalHostname to the route host while creating a CNAME record.").StringVar(&cfg.OCPRouterName)
 	app.Flag("namespace", "Limit resources queried for endpoints to a specific namespace (default: all namespaces)").Default(defaultConfig.Namespace).StringVar(&cfg.Namespace)
 	app.Flag("annotation-filter", "Filter resources queried for endpoints by annotation, using label selector semantics").Default(defaultConfig.AnnotationFilter).StringVar(&cfg.AnnotationFilter)
+	app.Flag("annotation-prefix", "Change the prefix : external-dns.alpha.kubernetes.io to something else").Default(defaultConfig.AnnotationPrefix).StringVar(&cfg.AnnotationPrefix)
 	app.Flag("label-filter", "Filter resources queried for endpoints by label selector; currently supported by source types crd, gateway-httproute, gateway-grpcroute, gateway-tlsroute, gateway-tcproute, gateway-udproute, ingress, node, openshift-route, service and ambassador-host").Default(defaultConfig.LabelFilter).StringVar(&cfg.LabelFilter)
 	app.Flag("ingress-class", "Require an Ingress to have this class name (defaults to any class; specify multiple times to allow more than one class)").StringsVar(&cfg.IngressClassNames)
 	app.Flag("fqdn-template", "A templated string that's used to generate DNS names from sources that don't define a hostname themselves, or to add a hostname suffix when paired with the fake source (optional). Accepts comma separated list for multiple global FQDN.").Default(defaultConfig.FQDNTemplate).StringVar(&cfg.FQDNTemplate)

@@ -19,6 +19,7 @@
 | `--openshift-router-name=OPENSHIFT-ROUTER-NAME` | if source is openshift-route then you can pass the ingress controller name. Based on this name external-dns will select the respective router from the route status and map that routerCanonicalHostname to the route host while creating a CNAME record. |
 | `--namespace=""` | Limit resources queried for endpoints to a specific namespace (default: all namespaces) |
 | `--annotation-filter=""` | Filter resources queried for endpoints by annotation, using label selector semantics |
+| `--annotation-prefix="external-dns.alpha.kubernetes.io"` | Change the prefix : external-dns.alpha.kubernetes.io to something else |
 | `--label-filter=""` | Filter resources queried for endpoints by label selector; currently supported by source types crd, gateway-httproute, gateway-grpcroute, gateway-tlsroute, gateway-tcproute, gateway-udproute, ingress, node, openshift-route, service and ambassador-host |
 | `--ingress-class=INGRESS-CLASS` | Require an Ingress to have this class name (defaults to any class; specify multiple times to allow more than one class) |
 | `--fqdn-template=""` | A templated string that's used to generate DNS names from sources that don't define a hostname themselves, or to add a hostname suffix when paired with the fake source (optional). Accepts comma separated list for multiple global FQDN. |

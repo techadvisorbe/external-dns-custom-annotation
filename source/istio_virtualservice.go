@@ -453,7 +453,7 @@ func (sc *virtualServiceSource) targetsFromGateway(ctx context.Context, gateway 
 		return
 	}
 
-	ingressStr, ok := gateway.Annotations[IstioGatewayIngressSource]
+	ingressStr, ok := gateway.Annotations[AnnotationPrefix+IstioGatewayIngressSource]
 	if ok && ingressStr != "" {
 		targets, err = sc.targetsFromIngress(ctx, ingressStr, gateway)
 		return
